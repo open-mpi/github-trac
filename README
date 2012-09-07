@@ -38,6 +38,10 @@ To install this Trac Plugin:
 
         #Optional - perform a fetch on the local git repository
         autofetch = true
+
+        #Optional - this will be appended to your commit message and used as trac comment
+        # use {commit[url]} for increased awesomeness
+        comment_template = Changeset: {commit[id]}
         
     5. Go to the Admin page for your project on GitHub. Then select the services tab.
         Under the: Post-Receive URLs
