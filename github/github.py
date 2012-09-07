@@ -16,10 +16,11 @@ class GithubPlugin(Component):
     closestatus = Option('github', 'closestatus', '', doc="""This is the status used to close a ticket. It defaults to closed.""")
     browser = Option('github', 'browser', '', doc="""Place your GitHub Source Browser URL here to have the /browser entry point redirect to GitHub.""")
     autofetch = Option('github', 'autofetch', '', doc="""Should we auto fetch the repo when we get a commit hook from GitHub.""")
-    repo = Option('trac', 'repository_dir' '', doc="""This is your repository dir""")
+    comment_template = Option('github', 'comment_template', "Changeset: {commit[id]}", doc="""This will be appended to your commit message and used as trac comment""")
+    repo = Option('trac', 'repository_dir', '', doc="""This is your repository dir""")
 
     def __init__(self):
-        self.hook = CommitHook(self.env)
+        self.hook = CommitHook(self.env, self.comment_template)
         self.env.log.debug("API Token: %s" % self.key)
         self.env.log.debug("Browser: %s" % self.browser)
         self.processHook = False

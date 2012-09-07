@@ -93,20 +93,22 @@ class CommitHook:
                        'see':        '_cmdRefs'}
 
 
-    def __init__(self, env):
+    def __init__(self, env, comment_template):
         self.env = env
+        self.comment_template = comment_template
 
     def process(self, commit, status):
         self.closestatus = status
         
-        msg = commit['message']
-        self.env.log.debug("Processing Commit: %s", msg)
-        note = "Changeset: %s" % commit['id']
-        msg = "%s \n %s" % (msg, note)
+        self.env.log.debug("Processing Commit: %s", commit['id'])
+        comment = (commit['message']
+            + "\n\n"
+            + self.comment_template.format(commit=commit))
+        self.env.log.debug("Prepared Comment: %s", comment)
         author = commit['author']['name']
         timestamp = datetime.now(utc)
         
-        cmd_groups = command_re.findall(msg)
+        cmd_groups = command_re.findall(comment)
         self.env.log.debug("Function Handlers: %s" % cmd_groups)
 
         tickets = {}
@@ -133,7 +135,7 @@ class CommitHook:
                     if change['permanent']:
                         cnum += 1
                 
-                ticket.save_changes(author, msg, timestamp, db, cnum+1)
+                ticket.save_changes(author, comment, timestamp, db, cnum+1)
                 db.commit()
                 
                 tn = TicketNotifyEmail(self.env)
