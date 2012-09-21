@@ -40,7 +40,8 @@ To install this Trac Plugin:
         autofetch = true
 
         #Optional - this will be appended to your commit message and used as trac comment
-        # use {commit[url]} for increased awesomeness
+        # Following keys are available: 'commit' and everything from github payload.
+        # See https://help.github.com/articles/post-receive-hooks for details of payload. See source for others.
         comment_template = Changeset: {commit[id]}
         
     5. Go to the Admin page for your project on GitHub. Then select the services tab.

@@ -109,8 +109,7 @@ class GithubPlugin(Component):
             jsondata = simplejson.loads(data)
 
             for i in jsondata['commits']:
-                self.hook.process(i, status)
-
+                self.hook.process(i, status, jsondata)
 
         if self.autofetch:
             repo = Git(self.repo)

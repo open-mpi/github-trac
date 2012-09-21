@@ -97,13 +97,13 @@ class CommitHook:
         self.env = env
         self.comment_template = comment_template
 
-    def process(self, commit, status):
+    def process(self, commit, status, payload):
         self.closestatus = status
         
         self.env.log.debug("Processing Commit: %s", commit['id'])
         comment = (commit['message']
             + "\n\n"
-            + self.comment_template.format(commit=commit))
+            + self.comment_template.format(commit=commit,**payload))
         self.env.log.debug("Prepared Comment: %s", comment)
         author = commit['author']['name']
         timestamp = datetime.now(utc)
