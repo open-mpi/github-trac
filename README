@@ -38,7 +38,10 @@ To install this Trac Plugin:
 
         #Optional - perform a fetch on the local git repository
         autofetch = true
-        
+
+        #Optional - restrict commit hook to branches, comma separated. Default is special value 'all', meaning no restriction.
+        branches = production,master,stable,dev
+
     5. Go to the Admin page for your project on GitHub. Then select the services tab.
         Under the: Post-Receive URLs
         Place a link to your Trac repository, in a format like this:
@@ -47,6 +50,9 @@ To install this Trac Plugin:
 
         You can get your GitHub API token from your accounts page.
         This is for your security, only those that know the API Token will able to post to this url
+
+        You can override branches configuration from trac.ini via query parameter in trac URL:
+        http://yourdomian.com/projects/projectname/github/APITOKEN?branches=production,staging
 
     6. All done.
 
