@@ -2,6 +2,8 @@ from trac.core import *
 from trac.config import Option, IntOption, ListOption, BoolOption
 from trac.web.api import IRequestFilter, IRequestHandler, Href
 from trac.util.translation import _
+from trac.web.api import parse_query_string
+
 from hook import CommitHook
 
 import simplejson
@@ -16,7 +18,9 @@ class GithubPlugin(Component):
     closestatus = Option('github', 'closestatus', '', doc="""This is the status used to close a ticket. It defaults to closed.""")
     browser = Option('github', 'browser', '', doc="""Place your GitHub Source Browser URL here to have the /browser entry point redirect to GitHub.""")
     autofetch = Option('github', 'autofetch', '', doc="""Should we auto fetch the repo when we get a commit hook from GitHub.""")
-    repo = Option('trac', 'repository_dir' '', doc="""This is your repository dir""")
+    branches = Option('github', 'branches', "all", doc="""Restrict commit hook to these branches. """
+        """Defaults to special value 'all', do not restrict commit hook""")
+    repo = Option('trac', 'repository_dir', '', doc="""This is your repository dir""")
 
     def __init__(self):
         self.hook = CommitHook(self.env)
@@ -103,13 +107,18 @@ class GithubPlugin(Component):
             status = 'closed'
 
         data = req.args.get('payload')
-         
+        branches = (parse_query_string(req.query_string).get('branches') or self.branches).split(',')
+        self.env.log.debug("Using branches: %s", branches)
+
         if data:
             jsondata = simplejson.loads(data)
+            ref = jsondata['ref'].split('/')[-1]
 
-            for i in jsondata['commits']:
-                self.hook.process(i, status)
-
+            if ref in branches or 'all' in branches:
+                for i in jsondata['commits']:
+                    self.hook.process(i, status, jsondata)
+            else:
+                self.env.log.debug("Not running hook, ref %s is not in %s", ref, branches)
 
         if self.autofetch:
             repo = Git(self.repo)
