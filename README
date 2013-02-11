@@ -42,6 +42,11 @@ To install this Trac Plugin:
         #Optional - restrict commit hook to branches, comma separated. Default is special value 'all', meaning no restriction.
         branches = production,master,stable,dev
 
+        #Optional - this will be appended to your commit message and used as trac comment
+        # Following keys are available: 'commit' and everything from github payload.
+        # See https://help.github.com/articles/post-receive-hooks for details of payload. See source for others.
+        comment_template = Changeset: {commit[id]}
+        
     5. Go to the Admin page for your project on GitHub. Then select the services tab.
         Under the: Post-Receive URLs
         Place a link to your Trac repository, in a format like this:
