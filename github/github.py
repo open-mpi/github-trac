@@ -1,14 +1,18 @@
 from trac.core import *
-from trac.config import Option, IntOption, ListOption, BoolOption
-from trac.web.api import IRequestFilter, IRequestHandler, Href
-from trac.util.translation import _
-from trac.web.api import parse_query_string
+from trac.config import Option
+from trac.web.api import IRequestFilter, IRequestHandler, _RequestArgs
+import urllib2
 
 from hook import CommitHook
 
 import simplejson
 
-from git import Git
+# GitPython module seems to have a bug showing thread warnings all the time.
+# This is really annoying so I make it ignored.
+# dikim@cs.indiana.edu (Sep 7, 2013)
+with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        from git import Git
 
 class GithubPlugin(Component):
     implements(IRequestHandler, IRequestFilter)
@@ -28,11 +32,12 @@ class GithubPlugin(Component):
         self.env.log.debug("API Token: %s" % self.key)
         self.env.log.debug("Browser: %s" % self.browser)
         self.processHook = False
+        self.env.log.debug("Match Request")
 
     
     # IRequestHandler methods
     def match_request(self, req):
-        self.env.log.debug("Match Request")
+        self.env.log.debug("Match Request: %s, key: %s" % (req.path_info, self.key))
         serve = req.path_info.rstrip('/') == ('/github/%s' % self.key) and req.method == 'POST'
         if serve:
             self.processHook = True
@@ -99,6 +104,29 @@ class GithubPlugin(Component):
 
         req.redirect(redirect)
 
+    def parse_query_string(self, query_string):
+        """Parse a query string into a _RequestArgs."""
+        args = _RequestArgs()
+        for arg in query_string.split('&'):
+            nv = arg.split('=', 1)
+            if len(nv) == 2:
+                (name, value) = nv
+            else:
+                (name, value) = (nv[0], '')
+            name = urllib2.unquote(name.replace('+', ' '))
+            if isinstance(name, unicode):
+                name = name.encode('utf-8')
+            value = urllib2.unquote(value.replace('+', ' '))
+            if not isinstance(value, unicode):
+                value = unicode(value, 'utf-8')
+            if name in args:
+                if isinstance(args[name], list):
+                    args[name].append(value)
+                else:
+                    args[name] = [args[name], value]
+            else:
+                args[name] = value
+        return args
         
 
     def processCommitHook(self, req):
@@ -108,7 +136,7 @@ class GithubPlugin(Component):
             status = 'closed'
 
         data = req.args.get('payload')
-        branches = (parse_query_string(req.query_string).get('branches') or self.branches).split(',')
+        branches = (self.parse_query_string(req.query_string).get('branches') or self.branches).split(',')
         self.env.log.debug("Using branches: %s", branches)
 
         if data:
